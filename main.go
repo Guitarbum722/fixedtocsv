@@ -63,39 +63,43 @@ func main() {
 	}
 	defer ofp.Close()
 
-	sw := newScanWriter(ifp, ofp, *cFlag) // initialize scanWriter
+	// read config file
+	confInput, err := ioutil.ReadFile(*cFlag)
+	if err != nil {
+		log.Fatalln("unable to read config file : ", err)
+	}
+
+	sw := newScanWriter(ifp, ofp, confInput) // initialize scanWriter
 
 	// convert fixed width file to csv
-	if err := sw.convert(); err != nil {
+	sw.convert()
+	if err := sw.flush(); err != nil {
 		log.Fatalln("err converting file : ", err)
 	}
 }
 
-func newScanWriter(i io.Reader, o io.Writer, c string) *scanWriter {
+func newScanWriter(i io.Reader, o io.Writer, c []byte) *scanWriter {
 	sw := &scanWriter{
 		s: bufio.NewScanner(i),
 		w: bufio.NewWriter(o),
 	}
+
 	sw.loadConfig(c)
 
 	return sw
 }
 
-func (sw *scanWriter) loadConfig(fileName string) {
-	confInput, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		log.Fatalln("unable to read config file : ", err)
-	}
+func (sw *scanWriter) loadConfig(confInput []byte) {
 	c := &fixedWidthConfig{}
 
-	if err = json.Unmarshal(confInput, c); err != nil {
+	if err := json.Unmarshal(confInput, c); err != nil {
 		log.Fatalln("err parsing config file :", err)
 	}
 
 	sw.conf = c
 }
 
-func (sw *scanWriter) convert() error {
+func (sw *scanWriter) convert() {
 	for sw.s.Scan() {
 		line := sw.s.Text()
 		var fields = make([]string, 0, len(sw.conf.ColumnLens))
@@ -111,6 +115,8 @@ func (sw *scanWriter) convert() error {
 
 		sw.w.WriteString(strings.Join(fields, *dFlag) + "\n")
 	}
+}
 
+func (sw *scanWriter) flush() error {
 	return sw.w.Flush()
 }
