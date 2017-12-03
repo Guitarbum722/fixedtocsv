@@ -3,13 +3,29 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 )
 
-const defaultConfigFile = "config.json"
+const (
+	usage = `Usage: fixedtocsv [-d] [-f] [-o]
+	Options:
+	  -h | --help  help
+	  -d           output delimiter (default: comma ",")
+	  -f           input configuration file (default: "config.json" in current directory) 
+	  -o           output file name (default: "output.csv" in current directory)
+`
+)
+
+var (
+	dFlag = flag.String("d", ",", "")
+	fFlag = flag.String("f", "config.json", "")
+	oFlag = flag.String("o", "output.csv", "")
+)
 
 type fixedWidthConfig struct {
 	ColumnLens []struct {
@@ -19,10 +35,15 @@ type fixedWidthConfig struct {
 }
 
 func main() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, usage)
+	}
+	flag.Parse()
+
 	var confInput []byte
 	var err error
 
-	confInput, err = ioutil.ReadFile(defaultConfigFile)
+	confInput, err = ioutil.ReadFile(*fFlag)
 
 	if err != nil {
 		log.Fatalln("unable to read config file : ", err)
@@ -38,7 +59,7 @@ func main() {
 	sr := strings.NewReader(input)
 	scanner := bufio.NewScanner(sr)
 
-	fp, err := os.Create("output.csv")
+	fp, err := os.Create(*oFlag)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -57,7 +78,7 @@ func main() {
 			fields[i] = strings.Trim(fields[i], " ")
 		}
 
-		w.WriteString(strings.Join(fields, ",") + "\n")
+		w.WriteString(strings.Join(fields, *dFlag) + "\n")
 	}
 
 	w.Flush()
