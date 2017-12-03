@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -36,35 +37,25 @@ type fixedWidthConfig struct {
 	} `json:"columnLens"`
 }
 
+// scanWriter scans data positioned input and writes to the configured writer.
+type scanWriter struct {
+	conf *fixedWidthConfig
+	s    *bufio.Scanner
+	w    *bufio.Writer
+}
+
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, usage)
 	}
 	flag.Parse()
 
-	var confInput []byte
-	var err error
-
-	confInput, err = ioutil.ReadFile(*cFlag)
-	if err != nil {
-		log.Fatalln("unable to read config file : ", err)
-	}
-
-	conf := &fixedWidthConfig{}
-
-	err = json.Unmarshal(confInput, conf)
-	if err != nil {
-		log.Fatalln("err parsing config file :", err)
-	}
-
 	var ifp *os.File
-	ifp, err = os.Open(*fFlag)
+	ifp, err := os.Open(*fFlag)
 	if err != nil {
 		log.Fatalln("unable to open input file : ", err)
 	}
 	defer ifp.Close()
-
-	scanner := bufio.NewScanner(ifp)
 
 	ofp, err := os.Create(*oFlag)
 	if err != nil {
@@ -72,23 +63,54 @@ func main() {
 	}
 	defer ofp.Close()
 
-	w := bufio.NewWriter(ofp)
+	sw := newScanWriter(ifp, ofp, *cFlag) // initialize scanWriter
 
-	for scanner.Scan() {
-		line := scanner.Text()
-		var fields = make([]string, 0, len(conf.ColumnLens))
+	// convert fixed width file to csv
+	if err := sw.convert(); err != nil {
+		log.Fatalln("err converting file : ", err)
+	}
+}
+
+func newScanWriter(i io.Reader, o io.Writer, c string) *scanWriter {
+	sw := &scanWriter{
+		s: bufio.NewScanner(i),
+		w: bufio.NewWriter(o),
+	}
+	sw.loadConfig(c)
+
+	return sw
+}
+
+func (sw *scanWriter) loadConfig(fileName string) {
+	confInput, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		log.Fatalln("unable to read config file : ", err)
+	}
+	c := &fixedWidthConfig{}
+
+	if err = json.Unmarshal(confInput, c); err != nil {
+		log.Fatalln("err parsing config file :", err)
+	}
+
+	sw.conf = c
+}
+
+func (sw *scanWriter) convert() error {
+	for sw.s.Scan() {
+		line := sw.s.Text()
+		var fields = make([]string, 0, len(sw.conf.ColumnLens))
 
 		// split line into a slice of strings based on length configuration
-		for i := range conf.ColumnLens {
-			fields = append(fields, line[conf.ColumnLens[i].Start:conf.ColumnLens[i].End])
+		for i := range sw.conf.ColumnLens {
+			fields = append(fields, line[sw.conf.ColumnLens[i].Start:sw.conf.ColumnLens[i].End])
 		}
 
 		for i := range fields {
 			fields[i] = strings.Trim(fields[i], " ")
 		}
 
-		w.WriteString(strings.Join(fields, *dFlag) + "\n")
+		sw.w.WriteString(strings.Join(fields, *dFlag) + "\n")
 	}
 
-	w.Flush()
+	return sw.w.Flush()
 }
