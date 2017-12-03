@@ -16,7 +16,6 @@ type fixedWidthConfig struct {
 		Start int `json:"start"`
 		End   int `json:"end"`
 	} `json:"columnLens"`
-	order []int // to order the keys in ColumnLens
 }
 
 func main() {
@@ -36,13 +35,6 @@ func main() {
 		log.Fatalln("err parsing config file :", err)
 	}
 
-	columns := make(map[int]int)
-
-	for i, v := range conf.ColumnLens {
-		conf.order = append(conf.order, i)
-		columns[i] = v.End - v.Start
-	}
-
 	sr := strings.NewReader(input)
 	scanner := bufio.NewScanner(sr)
 
@@ -57,7 +49,7 @@ func main() {
 		var fields = make([]string, 0, len(conf.ColumnLens))
 
 		// split line into a slice of strings based on length configuration
-		for i := range conf.order {
+		for i := range conf.ColumnLens {
 			fields = append(fields, line[conf.ColumnLens[i].Start:conf.ColumnLens[i].End])
 		}
 
