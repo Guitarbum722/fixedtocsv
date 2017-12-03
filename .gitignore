@@ -1,5 +1,5 @@
 bin/*
 output.csv
-config.json
+config.*
 input.txt
 .DS_Store
