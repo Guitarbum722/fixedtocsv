@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -22,20 +21,38 @@ func main() {
 		"columnLens": [
 	  {
 		"start": 0,
-		"end": 7
+		"end": 6
 	  },
 	  {
-		"start": 8,
-		"end": 12
+		"start": 7,
+		"end": 21
+	  },
+	  {
+		"start": 22,
+		"end": 38
+	  },
+	  {
+		"start": 39,
+		"end": 63
+	  },
+	  {
+		"start": 64,
+		"end": 101
+	  },
+	  {
+		"start": 102,
+		"end": 136
+	  },
+	  {
+		"start": 137,
+		"end": 149
+	  },
+	  {
+		"start": 150,
+		"end": 163
 	  }
 	]
 }
-`
-
-	input := `John   1245
-Peter  3545
-Susan  6784
-Sarah  4321
 `
 
 	conf := &fixedWidthConfig{}
@@ -52,20 +69,29 @@ Sarah  4321
 		columns[i] = v.End - v.Start
 	}
 
-	fmt.Println(columns, conf.order)
-
 	sr := strings.NewReader(input)
 	scanner := bufio.NewScanner(sr)
 
-	w := bufio.NewWriter(os.Stdout)
+	fp, err := os.Create("output.csv")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	w := bufio.NewWriter(fp)
 
 	for scanner.Scan() {
 		line := scanner.Text()
+		var fields = make([]string, 0, len(conf.ColumnLens))
 
-		for _, v := range line {
-			w.WriteRune(v)
+		// split line into a slice of strings based on length configuration
+		for i := range conf.order {
+			fields = append(fields, line[conf.ColumnLens[i].Start:conf.ColumnLens[i].End])
 		}
-		w.WriteRune('\n')
+
+		for i := range fields {
+			fields[i] = strings.Trim(fields[i], " ")
+		}
+
+		w.WriteString(strings.Join(fields, ",") + "\n")
 	}
 
 	w.Flush()
