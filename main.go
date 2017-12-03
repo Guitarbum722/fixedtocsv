@@ -3,10 +3,13 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 )
+
+const defaultConfigFile = "config.json"
 
 type fixedWidthConfig struct {
 	ColumnLens []struct {
@@ -17,49 +20,20 @@ type fixedWidthConfig struct {
 }
 
 func main() {
-	configInput := `{
-		"columnLens": [
-	  {
-		"start": 0,
-		"end": 6
-	  },
-	  {
-		"start": 7,
-		"end": 21
-	  },
-	  {
-		"start": 22,
-		"end": 38
-	  },
-	  {
-		"start": 39,
-		"end": 63
-	  },
-	  {
-		"start": 64,
-		"end": 101
-	  },
-	  {
-		"start": 102,
-		"end": 136
-	  },
-	  {
-		"start": 137,
-		"end": 149
-	  },
-	  {
-		"start": 150,
-		"end": 163
-	  }
-	]
-}
-`
+	var confInput []byte
+	var err error
+
+	confInput, err = ioutil.ReadFile(defaultConfigFile)
+
+	if err != nil {
+		log.Fatalln("unable to read config file : ", err)
+	}
 
 	conf := &fixedWidthConfig{}
 
-	err := json.Unmarshal([]byte(configInput), conf)
+	err = json.Unmarshal(confInput, conf)
 	if err != nil {
-		log.Fatalln("err parsing config file :\n", err)
+		log.Fatalln("err parsing config file :", err)
 	}
 
 	columns := make(map[int]int)
