@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -13,6 +14,7 @@ type fixedWidthConfig struct {
 		Start int `json:"start"`
 		End   int `json:"end"`
 	} `json:"columnLens"`
+	order []int // to order the keys in ColumnLens
 }
 
 func main() {
@@ -30,8 +32,7 @@ func main() {
 }
 `
 
-	input := `This is a header line to be skipped
-John   1245
+	input := `John   1245
 Peter  3545
 Susan  6784
 Sarah  4321
@@ -41,21 +42,31 @@ Sarah  4321
 
 	err := json.Unmarshal([]byte(configInput), conf)
 	if err != nil {
-		log.Fatalln("err parsing json :\n", err)
+		log.Fatalln("err parsing config file :\n", err)
 	}
 
 	columns := make(map[int]int)
 
 	for i, v := range conf.ColumnLens {
+		conf.order = append(conf.order, i)
 		columns[i] = v.End - v.Start
 	}
 
-	fmt.Println(columns)
+	fmt.Println(columns, conf.order)
 
 	sr := strings.NewReader(input)
 	scanner := bufio.NewScanner(sr)
 
+	w := bufio.NewWriter(os.Stdout)
+
 	for scanner.Scan() {
-		fmt.Println(scanner.Text())
+		line := scanner.Text()
+
+		for _, v := range line {
+			w.WriteRune(v)
+		}
+		w.WriteRune('\n')
 	}
+
+	w.Flush()
 }
