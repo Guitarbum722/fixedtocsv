@@ -3,27 +3,47 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 )
 
-const defaultConfigFile = "config.json"
+const (
+	usage = `Usage: fixedtocsv [-d] [-f] [-o]
+	Options:
+	  -h | --help  help
+	  -d           output delimiter (default: comma ",")
+	  -f           input configuration file (default: "config.json" in current directory) 
+	  -o           output file name (default: "output.csv" in current directory)
+`
+)
+
+var (
+	dFlag = flag.String("d", ",", "")
+	fFlag = flag.String("f", "config.json", "")
+	oFlag = flag.String("o", "output.csv", "")
+)
 
 type fixedWidthConfig struct {
 	ColumnLens []struct {
 		Start int `json:"start"`
 		End   int `json:"end"`
 	} `json:"columnLens"`
-	order []int // to order the keys in ColumnLens
 }
 
 func main() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, usage)
+	}
+	flag.Parse()
+
 	var confInput []byte
 	var err error
 
-	confInput, err = ioutil.ReadFile(defaultConfigFile)
+	confInput, err = ioutil.ReadFile(*fFlag)
 
 	if err != nil {
 		log.Fatalln("unable to read config file : ", err)
@@ -36,17 +56,10 @@ func main() {
 		log.Fatalln("err parsing config file :", err)
 	}
 
-	columns := make(map[int]int)
-
-	for i, v := range conf.ColumnLens {
-		conf.order = append(conf.order, i)
-		columns[i] = v.End - v.Start
-	}
-
 	sr := strings.NewReader(input)
 	scanner := bufio.NewScanner(sr)
 
-	fp, err := os.Create("output.csv")
+	fp, err := os.Create(*oFlag)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -57,7 +70,7 @@ func main() {
 		var fields = make([]string, 0, len(conf.ColumnLens))
 
 		// split line into a slice of strings based on length configuration
-		for i := range conf.order {
+		for i := range conf.ColumnLens {
 			fields = append(fields, line[conf.ColumnLens[i].Start:conf.ColumnLens[i].End])
 		}
 
@@ -65,7 +78,7 @@ func main() {
 			fields[i] = strings.Trim(fields[i], " ")
 		}
 
-		w.WriteString(strings.Join(fields, ",") + "\n")
+		w.WriteString(strings.Join(fields, *dFlag) + "\n")
 	}
 
 	w.Flush()
