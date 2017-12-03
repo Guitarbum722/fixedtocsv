@@ -12,18 +12,20 @@ import (
 )
 
 const (
-	usage = `Usage: fixedtocsv [-d] [-f] [-o]
+	usage = `Usage: fixedtocsv [-c] [-d] [-f] [-o]
 	Options:
 	  -h | --help  help
+	  -c           input configuration file (default: "config.json" in current directory) 
 	  -d           output delimiter (default: comma ",")
-	  -f           input configuration file (default: "config.json" in current directory) 
+	  -f           input file name (Required)
 	  -o           output file name (default: "output.csv" in current directory)
 `
 )
 
 var (
 	dFlag = flag.String("d", ",", "")
-	fFlag = flag.String("f", "config.json", "")
+	cFlag = flag.String("c", "config.json", "")
+	fFlag = flag.String("f", "", "must specify an input file")
 	oFlag = flag.String("o", "output.csv", "")
 )
 
@@ -43,7 +45,7 @@ func main() {
 	var confInput []byte
 	var err error
 
-	confInput, err = ioutil.ReadFile(*fFlag)
+	confInput, err = ioutil.ReadFile(*cFlag)
 
 	if err != nil {
 		log.Fatalln("unable to read config file : ", err)
