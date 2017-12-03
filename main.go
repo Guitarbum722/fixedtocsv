@@ -46,7 +46,6 @@ func main() {
 	var err error
 
 	confInput, err = ioutil.ReadFile(*cFlag)
-
 	if err != nil {
 		log.Fatalln("unable to read config file : ", err)
 	}
@@ -58,14 +57,22 @@ func main() {
 		log.Fatalln("err parsing config file :", err)
 	}
 
-	sr := strings.NewReader(input)
-	scanner := bufio.NewScanner(sr)
+	var ifp *os.File
+	ifp, err = os.Open(*fFlag)
+	if err != nil {
+		log.Fatalln("unable to open input file : ", err)
+	}
+	defer ifp.Close()
 
-	fp, err := os.Create(*oFlag)
+	scanner := bufio.NewScanner(ifp)
+
+	ofp, err := os.Create(*oFlag)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	w := bufio.NewWriter(fp)
+	defer ofp.Close()
+
+	w := bufio.NewWriter(ofp)
 
 	for scanner.Scan() {
 		line := scanner.Text()
