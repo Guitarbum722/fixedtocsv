@@ -2,3 +2,4 @@ bin/*
 output.csv
 config.json
 input.txt
+.DS_Store
