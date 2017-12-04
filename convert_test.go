@@ -35,7 +35,12 @@ var convertCases = []struct {
 }
 
 func TestNewScanWriter(t *testing.T) {
-	sw := newScanWriter(strings.NewReader("One  Two  Three"), bytes.NewBufferString(""), []byte(sampleConfig))
+	sw := newScanWriter(
+		strings.NewReader("One  Two  Three"),
+		bytes.NewBufferString(""),
+		[]byte(sampleConfig),
+		jsonConfig,
+	)
 
 	if sw == nil {
 		t.Fatal("failed initializing scanWriter\n")
@@ -44,7 +49,12 @@ func TestNewScanWriter(t *testing.T) {
 
 func TestConvert(t *testing.T) {
 	for _, tt := range convertCases {
-		sw := newScanWriter(strings.NewReader(tt.input), bytes.NewBufferString(""), []byte(sampleConfig))
+		sw := newScanWriter(
+			strings.NewReader(tt.input),
+			bytes.NewBufferString(""),
+			[]byte(sampleConfig),
+			jsonConfig,
+		)
 		sw.convert()
 
 		bufGot := sw.w.Buffered()
