@@ -25,8 +25,8 @@ freebsd:
 	tar -czvf bin/$(BINARY)-freebsd.tar.gz bin/$(BINARY)-freebsd
 
 windows:
-	GOOS=windows GOARCH=amd64 go build -v -o bin/$(BINARY)-windows
-	tar -czvf bin/$(BINARY)-windows.tar.gz bin/$(BINARY)-windows
+	GOOS=windows GOARCH=amd64 go build -v -o bin/$(BINARY)-windows.exe
+	tar -czvf bin/$(BINARY)-windows.tar.gz bin/$(BINARY)-windows.exe
 
 linux:
 	GOOS=linux GOARCH=amd64 go build -v -o bin/$(BINARY)-linux
