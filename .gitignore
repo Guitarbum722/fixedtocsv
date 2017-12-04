@@ -1,5 +1,3 @@
 bin/*
 output.csv
-config.*
-input.txt
 .DS_Store
