@@ -10,11 +10,11 @@ const sampleConfig = `{
     "columnLens": [
         {
             "start": 0,
-            "end": 6
+            "end": 7
         },
         {
             "start": 7,
-            "end": 21
+            "end": 22
 		}
 	]
 }
@@ -22,7 +22,7 @@ const sampleConfig = `{
 
 var convertCases = []struct {
 	input     string
-	resultBuf int
+	resultBuf int // fields trimmed, plus delimiter, plus newline
 }{
 	{
 		"1      Jeffry         ",
@@ -31,6 +31,10 @@ var convertCases = []struct {
 	{
 		"20     CaspŁr         ",
 		11,
+	},
+	{
+		"4333333Doll           ",
+		13,
 	},
 }
 
