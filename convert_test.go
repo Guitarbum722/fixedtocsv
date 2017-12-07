@@ -67,3 +67,19 @@ func TestConvert(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkConvert(b *testing.B) {
+	sw := newScanWriter(
+		strings.NewReader(convertCases[0].input),
+		bytes.NewBufferString(""),
+		[]byte(sampleConfig),
+		jsonConfig,
+	)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		sw.convert()
+	}
+}
