@@ -81,10 +81,10 @@ func (sw *scanWriter) loadConfig(confInput []byte, t configType) {
 }
 
 func (sw *scanWriter) convert() {
-	var fields = make([]string, len(sw.conf.ColumnLens))
 
 	for sw.s.Scan() {
 		line := sw.s.Text()
+		fields := make([]string, len(sw.conf.ColumnLens))
 
 		// split line into a slice of strings based on length configuration
 		// then trim surrounding space.
